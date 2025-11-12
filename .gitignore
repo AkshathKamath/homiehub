@@ -1,3 +1,5 @@
 venv/
 .env
+GCP_Account_Key.json
+**/__pycache__
 
