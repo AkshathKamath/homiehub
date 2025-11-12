@@ -56,6 +56,9 @@ async def health_check():
 from app.api import users
 app.include_router(users.router)
 
+from app.api import rooms
+app.include_router(rooms.router)
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main:app", host="0.0.0.0", port=4000, reload=True)
