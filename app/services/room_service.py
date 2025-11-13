@@ -1,8 +1,10 @@
 from google.cloud.firestore import Client, SERVER_TIMESTAMP
+from google.cloud.firestore_v1.vector import Vector
 import logging
 
 from app.db.firestore import get_firestore
 from app.models.room import RoomCreate
+from app.core.vectorize_room import vectorize_room
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +23,8 @@ class RoomService:
             room_data['available_from'] = room_data['available_from'].isoformat()
             
             room_data['created_at'] = SERVER_TIMESTAMP
+            room_vector = vectorize_room(room_data=room_data)
+            room_data['room_vector'] = Vector(room_vector)
             doc_ref = self._firestore.collection('rooms').document()
             doc_ref.set(room_data)
             logger.info(f"Room created with ID: {doc_ref.id}")
