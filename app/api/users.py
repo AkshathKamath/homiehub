@@ -15,7 +15,7 @@ async def create_user(
 ):
     """Create a new user"""
     try:
-        return user_service_obj.add_user(user=user)
+        return await user_service_obj.add_user(user=user)
     except Exception as e:
         logger.error(f"Error in create_user endpoint: {str(e)}")
         raise HTTPException(

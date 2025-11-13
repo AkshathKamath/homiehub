@@ -1,6 +1,7 @@
 import logging
 from typing import Optional
 from google.cloud.firestore import Client
+from google.cloud.firestore import AsyncClient
 from google.auth.exceptions import DefaultCredentialsError
 from google.api_core.exceptions import GoogleAPIError
 import firebase_admin
@@ -12,12 +13,13 @@ logger = logging.getLogger(__name__)
 
 class FirestoreConnection:
     """Firestore connection manager with singleton pattern"""
-    _client: Optional[Client] = None
+    # _client: Optional[Client] = None
+    _client: Optional[AsyncClient] = None
     _initialized: bool = False
     _app: Optional[firebase_admin.App] = None
 
     @classmethod
-    def initialize(cls):
+    async def initialize(cls):
         """Initialize Firestore connection"""
         # If client is already initialized, do not create a new one (Singleton Pattern)
         if cls._initialized:
@@ -30,11 +32,12 @@ class FirestoreConnection:
             cls._app = firebase_admin.initialize_app(cred)
             
             # Get Firestore client (handles connection pooling internally via gRPC)
-            cls._client = firestore.client(database_id='homiehubdb')
-            
-            # Test connection by listing collections
-            list(cls._client.collections())
-            
+            # cls._client = firestore.client(database_id='homiehubdb')
+            cls._client = firestore.AsyncClient(
+                project=cls._app.project_id,
+                credentials=cls._app.credential.get_credential(),
+                database='homiehubdb'
+            )
             logger.info("Firestore connected successfully")
             cls._initialized = True
             
@@ -60,7 +63,7 @@ class FirestoreConnection:
         return cls._client
     
     @classmethod
-    def close(cls):
+    async def close(cls):
         """Close Firestore connection and cleanup Firebase app"""
         if cls._client:
             logger.info("Closing Firestore connection")
@@ -73,20 +76,6 @@ class FirestoreConnection:
             except Exception as e:
                 logger.warning(f"Error deleting Firebase app: {str(e)}")
         cls._initialized = False
-    
-    @classmethod
-    def health_check(cls) -> bool:
-        """Check Firestore health"""
-        try:
-            if cls._client is None:
-                return False
-            # Quick health check by listing collections
-            list(cls._client.collections())
-            return True
-        except Exception as e:
-            logger.error(f"Firestore health check failed: {str(e)}")
-            return False
-        
 
 def get_firestore() -> Client:
     """Get Firestore client instance"""

@@ -1,4 +1,4 @@
-from google.cloud.firestore import Client, SERVER_TIMESTAMP
+from google.cloud.firestore import AsyncClient, SERVER_TIMESTAMP
 from google.cloud.firestore_v1.vector import Vector
 import logging
 
@@ -10,9 +10,9 @@ logger = logging.getLogger(__name__)
 
 class RoomService:
     def __init__(self):
-        self._firestore: Client = get_firestore()
+        self._firestore: AsyncClient = get_firestore()
     
-    def add_room(
+    async def add_room(
             self,
             room: RoomCreate
     ):
@@ -26,13 +26,12 @@ class RoomService:
             room_vector = vectorize_room(room_data=room_data)
             room_data['room_vector'] = Vector(room_vector)
             doc_ref = self._firestore.collection('rooms').document()
-            doc_ref.set(room_data)
+            await doc_ref.set(room_data)
             logger.info(f"Room created with ID: {doc_ref.id}")
             return {
                 "id": doc_ref.id,
                 "message": "Room created successfully"
             }
-        
         except Exception as e:
             logger.error(f"Failed to create room: {str(e)}", exc_info=True)
             raise

@@ -1,4 +1,4 @@
-from google.cloud.firestore import Client,SERVER_TIMESTAMP
+from google.cloud.firestore import AsyncClient, SERVER_TIMESTAMP
 from google.cloud.firestore_v1.vector import Vector
 import logging
 
@@ -12,9 +12,9 @@ class UserService:
     def __init__(
           self  
     ):
-        self._firestore: Client = get_firestore()
+        self._firestore: AsyncClient = get_firestore()
     
-    def add_user(
+    async def add_user(
             self,
             user: UserCreate
     ):
@@ -25,7 +25,7 @@ class UserService:
             user_vector = vectorize_user(user_data=user_data)
             user_data['user_vector'] = Vector(user_vector)
             doc_ref = self._firestore.collection('users').document()
-            doc_ref.set(user_data)
+            await doc_ref.set(user_data)
             logger.info(f"User created with ID: {doc_ref.id}")
             return {
             "id": doc_ref.id,

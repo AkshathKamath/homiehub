@@ -15,7 +15,7 @@ async def create_room(
 ):
     """Create a new room"""
     try:
-        return room_service_obj.add_room(room=room)
+        return await room_service_obj.add_room(room=room)
     except Exception as e:
         logger.error(f"Error in create_room endpoint: {str(e)}")
         raise HTTPException(
