@@ -1,24 +1,20 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 import logging
-from pydantic import BaseModel
 
 from app.services.recommendation_service import RecommendationService, get_recommendation_service
+from app.models.user import UserFilter
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/recommendation", tags=["recommendations"])
 
-class RecommendationRequest(BaseModel):
-    user_id: str
-    limit: int = 10
-
 @router.post("")
 async def get_matched_rooms(
-    request: RecommendationRequest,
+    user: UserFilter,
     rec_service_obj: RecommendationService = Depends(get_recommendation_service)
 ):
     try:
-        return await rec_service_obj.find_best_match(user_id=request.user_id)
+        return await rec_service_obj.find_best_match(user=user)
     except Exception as e:
         logger.error(f"Error in create_room endpoint: {str(e)}")
         raise HTTPException(
