@@ -93,7 +93,7 @@ class RecommendationService:
             vector_query = self._firestore.collection('rooms').find_nearest(
                 vector_field='room_vector',
                 query_vector=query_vector,
-                distance_measure=DistanceMeasure.COSINE,
+                distance_measure=DistanceMeasure.EUCLIDEAN,
                 limit=fetch_limit
             )
             results = []
