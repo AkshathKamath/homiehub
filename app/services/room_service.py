@@ -23,8 +23,8 @@ class RoomService:
             room_data['available_from'] = room_data['available_from'].isoformat()
             
             room_data['created_at'] = SERVER_TIMESTAMP
-            room_vector = vectorize_room(room_data=room_data)
-            room_data['room_vector'] = Vector(room_vector)
+            # room_vector = vectorize_room(room_data=room_data)
+            # room_data['room_vector'] = Vector(room_vector)
             doc_ref = self._firestore.collection('rooms').document()
             await doc_ref.set(room_data)
             logger.info(f"Room created with ID: {doc_ref.id}")

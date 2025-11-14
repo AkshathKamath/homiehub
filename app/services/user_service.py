@@ -22,8 +22,8 @@ class UserService:
             user_data = user.model_dump()
             user_data['move_in_date'] = user_data['move_in_date'].isoformat()
             user_data['created_at'] = SERVER_TIMESTAMP
-            user_vector = vectorize_user(user_data=user_data)
-            user_data['user_vector'] = Vector(user_vector)
+            # user_vector = vectorize_user(user_data=user_data)
+            # user_data['user_vector'] = Vector(user_vector)
             doc_ref = self._firestore.collection('users').document()
             await doc_ref.set(user_data)
             logger.info(f"User created with ID: {doc_ref.id}")
