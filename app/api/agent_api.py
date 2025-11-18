@@ -13,7 +13,6 @@ from app.core.dependencies import (
     get_llm_client_dependency
 )
 from app.agent.components.state import StateManager
-from app.agent.agent_core import get_agent_service
 from app.config import settings
 
 logger = logging.getLogger(__name__)
