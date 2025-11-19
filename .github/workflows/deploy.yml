@@ -3,11 +3,11 @@ name: Deploy to Cloud Run
 on:
     push:
         branches:
-            - llm-agent
+            - recommendation-service
 
 env:
     PROJECT_ID: homiehub
-    SERVICE_NAME: homiehub-llm-agent-api
+    SERVICE_NAME: homiehub-recommendation-api
     REGION: us-east4
 
 jobs:
@@ -39,18 +39,18 @@ jobs:
 
             - name: Build Docker image
               run: |
-                  docker build -t gcr.io/homiehub/homiehub-llm-agent-api:${{ github.sha }} .
-                  docker tag gcr.io/homiehub/homiehub-llm-agent-api:${{ github.sha }} gcr.io/homiehub/homiehub-llm-agent-api:latest
+                  docker build -t gcr.io/homiehub/homiehub-recommendation-api:${{ github.sha }} .
+                  docker tag gcr.io/homiehub/homiehub-recommendation-api:${{ github.sha }} gcr.io/homiehub/homiehub-recommendation-api:latest
 
             - name: Push to GCR
               run: |
-                  docker push gcr.io/homiehub/homiehub-llm-agent-api:${{ github.sha }}
-                  docker push gcr.io/homiehub/homiehub-llm-agent-api:latest
+                  docker push gcr.io/homiehub/homiehub-recommendation-api:${{ github.sha }}
+                  docker push gcr.io/homiehub/homiehub-recommendation-api:latest
 
             - name: Deploy to Cloud Run
               run: |
-                  gcloud run deploy homiehub-llm-agent-api \
-                    --image gcr.io/homiehub/homiehub-llm-agent-api:${{ github.sha }} \
+                  gcloud run deploy homiehub-recommendation-api \
+                    --image gcr.io/homiehub/homiehub-recommendation-api:${{ github.sha }} \
                     --region $REGION \
                     --platform managed \
                     --allow-unauthenticated \
