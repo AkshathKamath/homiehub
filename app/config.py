@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     google_cloud_project: str
     vertex_ai_location: str
     gemini_model: str
+    gcloud_json: str
     
     # Matching service
     matching_service_url: str
