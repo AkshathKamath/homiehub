@@ -1,0 +1,66 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches:
+      - llm-agent
+
+env:
+  PROJECT_ID: homiehub
+  SERVICE_NAME: homiehub-llm-agent-api
+  REGION: us-east4
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Create GCP key file
+      run: |
+        echo '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}' > GCP_Account_Key.json
+
+    - name: Create .env file
+      run: |
+        echo "${{ secrets.ENV_FILE }}" > .env
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Configure Docker for GCR
+      run: gcloud auth configure-docker
+
+    - name: Build Docker image
+      run: |
+        docker build -t gcr.io/homiehub/homiehub-llm-agent-api:${{ github.sha }} .
+        docker tag gcr.io/homiehub/homiehub-llm-agent-api:${{ github.sha }} gcr.io/homiehub/homiehub-llm-agent-api:latest
+
+    - name: Push to GCR
+      run: |
+        docker push gcr.io/homiehub/homiehub-llm-agent-api:${{ github.sha }}
+        docker push gcr.io/homiehub/homiehub-llm-agent-api:latest
+
+    - name: Deploy to Cloud Run
+      run: |
+        gcloud run deploy homiehub-llm-agent-api \
+          --image gcr.io/homiehub/homiehub-llm-agent-api:${{ github.sha }} \
+          --region $REGION \
+          --platform managed \
+          --allow-unauthenticated \
+          --port 8080 \
+          --memory 2Gi \
+          --cpu 2 \
+          --timeout 300
+
+    - name: Cleanup sensitive files
+      if: always()
+      run: |
+        rm -f GCP_Account_Key.json
+        rm -f .env
