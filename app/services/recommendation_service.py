@@ -88,7 +88,7 @@ class RecommendationService:
             fetch_limit = user.limit * 5 if has_filters else user.limit
             fetch_limit = min(fetch_limit, 1000)  # Cap at Firestore max
             logger.info(
-                f"Vector search: user={user.user_id}, "
+                f"Vector search: user={user_id}, "
                 f"has_filters={has_filters}, fetch_limit={fetch_limit}"
             )
             vector_query = self._firestore.collection('rooms').find_nearest(
@@ -126,10 +126,10 @@ class RecommendationService:
             
             # Alert if slow
             if elapsed_ms > 500:
-                logger.warning(f"SLOW QUERY: {elapsed_ms}ms for user={user.user_id}")
+                logger.warning(f"SLOW QUERY: {elapsed_ms}ms for user={user_id}")
             
             return {
-                'user_id': user.user_id,
+                'user_id': user_id,
                 'matches': results,
                 'total_results': len(results)
             }
