@@ -67,16 +67,17 @@ class RecommendationService:
     
     async def find_best_match(
             self,
+            user_id: str,
             user: UserFilter,
             limit: int = 10
     ):
         start_time = time.time()
         try:
-            user_ref = self._firestore.collection('users').document(user.user_id)
+            user_ref = self._firestore.collection('users').document(user_id)
             user_doc = await user_ref.get()
             
             if not user_doc.exists:
-                raise ValueError(f"User {user.user_id} not found")
+                raise ValueError(f"User {user_id} not found")
             
             user_data = user_doc.to_dict()
             

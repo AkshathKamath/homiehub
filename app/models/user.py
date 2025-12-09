@@ -3,13 +3,13 @@ from typing import List, Optional
 from datetime import date
 
 class UserFilter(BaseModel):
-    user_id: str = Field(
-        ...,
-        min_length=1,
-        max_length=128,
-        description="Unique identifier for the user requesting recommendations",
-        examples=["N7BHzi80hxrkDeQBAziZ"]
-    )
+    # user_id: str = Field(
+    #     ...,
+    #     min_length=1,
+    #     max_length=128,
+    #     description="Unique identifier for the user requesting recommendations",
+    #     examples=["N7BHzi80hxrkDeQBAziZ"]
+    # )
     
     location: Optional[str] = Field(
         None,
@@ -72,13 +72,13 @@ class UserFilter(BaseModel):
         description="Maximum number of results to return"
     )
 
-    @field_validator('user_id')
-    @classmethod
-    def validate_user_id(cls, v: str) -> str:
-        """Validate user_id."""
-        if not v or not v.strip():
-            raise ValueError("user_id cannot be empty")
-        return v.strip()
+    # @field_validator('user_id')
+    # @classmethod
+    # def validate_user_id(cls, v: str) -> str:
+    #     """Validate user_id."""
+    #     if not v or not v.strip():
+    #         raise ValueError("user_id cannot be empty")
+    #     return v.strip()
 
     @field_validator('location', 'room_type', 'flatmate_gender', 'attached_bathroom')
     @classmethod
