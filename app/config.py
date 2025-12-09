@@ -22,3 +22,6 @@ class Settings(BaseSettings):
         env_file_encoding = 'utf-8'
 
 settings = Settings()
+
+JWT_SECRET_KEY="87vYXFU9IMtt6_ydwILLYLAf2bFcVuJMma5gW4k_CH0"
+JWT_ALGORITHM="HS256"

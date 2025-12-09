@@ -12,6 +12,7 @@ from app.core.dependencies import (
     get_state_manager_dependency,
     get_llm_client_dependency
 )
+from app.core.security_dependencies import get_current_user
 from app.agent.components.state import StateManager
 from app.config import settings
 
@@ -22,6 +23,7 @@ router = APIRouter(prefix="/chat", tags=["llm-agent"])
 @router.post("", response_model=AgentResponse, status_code=status.HTTP_200_OK)
 async def chat_with_agent(
     request: AgentRequest,
+    current_user: dict = Depends(get_current_user),
     agent_graph: StateGraph = Depends(get_agent_graph),
     state_manager: StateManager = Depends(get_state_manager_dependency)
 ):
@@ -39,8 +41,9 @@ async def chat_with_agent(
     start_time = time.time()
     request_id = f"req_{int(time.time() * 1000)}"
     try:
-        logger.info(f"[{request_id}] Processing chat request from user {request.user_id}")
-        if not request.user_id or not request.user_id.strip():
+        user_id = current_user['user_id']
+        logger.info(f"[{request_id}] Processing chat request from user {user_id}")
+        if not user_id or not user_id.strip():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="user_id is required and cannot be empty"
@@ -53,7 +56,7 @@ async def chat_with_agent(
         # Create fresh state for this request
         initial_message = HumanMessage(content=request.message)
         initial_state = state_manager.create_initial_state(
-            user_id=request.user_id,
+            user_id=user_id,
             initial_message=initial_message,
             metadata={
                 "request_id": request_id,
@@ -93,7 +96,7 @@ async def chat_with_agent(
             state={
                 "message_count": len(result["messages"]),
                 "original_message": request.message,
-                "user_id": request.user_id,
+                "user_id": user_id,
                 "agent_type": "room_matching_assistant",
                 "model": settings.gemini_model,
                 "request_id": request_id,
@@ -136,18 +139,20 @@ async def test_llm(
 @router.post("/debug/test-graph")
 async def test_graph(
     request: AgentRequest,
+    current_user: dict = Depends(get_current_user),
     agent_graph: StateGraph = Depends(get_agent_graph),
     state_manager: StateManager = Depends(get_state_manager_dependency)
 ):
     """Debug endpoint to test full graph execution with detailed logging"""
     try:
-        logger.info(f"DEBUG: Starting graph test for user {request.user_id}")
+        user_id = current_user['user_id']
+        logger.info(f"DEBUG: Starting graph test for user {user_id}")
         logger.info(f"DEBUG: Message: {request.message}")
         
         # Create initial state
         initial_message = HumanMessage(content=request.message)
         initial_state = state_manager.create_initial_state(
-            user_id=request.user_id,
+            user_id=user_id,
             initial_message=initial_message,
             metadata={"debug": True}
         )

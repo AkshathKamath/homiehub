@@ -77,7 +77,7 @@ def find_matching_rooms(
         # Call matching service
         client = get_http_client()
         response = client.post(
-            f"{settings.matching_service_url}/recommendation",
+            f"{settings.matching_service_url}/recommendation/agent",
             json=payload
         )
         
