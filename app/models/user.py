@@ -4,7 +4,7 @@ from datetime import date
 
 class UserFilter(BaseModel):
     user_id: Optional[str] = Field(
-        ...,
+        None,
         min_length=1,
         max_length=128,
         description="Unique identifier for the user requesting recommendations",
