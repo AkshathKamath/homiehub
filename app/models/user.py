@@ -3,13 +3,13 @@ from typing import List, Optional
 from datetime import date
 
 class UserFilter(BaseModel):
-    # user_id: str = Field(
-    #     ...,
-    #     min_length=1,
-    #     max_length=128,
-    #     description="Unique identifier for the user requesting recommendations",
-    #     examples=["N7BHzi80hxrkDeQBAziZ"]
-    # )
+    user_id: Optional[str] = Field(
+        ...,
+        min_length=1,
+        max_length=128,
+        description="Unique identifier for the user requesting recommendations",
+        examples=["N7BHzi80hxrkDeQBAziZ"]
+    )
     
     location: Optional[str] = Field(
         None,
@@ -116,3 +116,6 @@ class UserFilter(BaseModel):
             self.lease_duration_months is not None,
             self.available_from is not None
         ])
+
+class User(BaseModel):
+    user_id: str

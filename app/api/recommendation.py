@@ -3,7 +3,7 @@ import logging
 
 from app.core.dependencies import get_current_user
 from app.services.recommendation_service import RecommendationService, get_recommendation_service
-from app.models.user import UserFilter
+from app.models.user import UserFilter, User
 
 logger = logging.getLogger(__name__)
 
@@ -28,11 +28,10 @@ async def get_matched_rooms(
 @router.post("/agent")
 async def get_matched_rooms_agent(
     user: UserFilter,
-    user_id: str,
     rec_service_obj: RecommendationService = Depends(get_recommendation_service)
 ):
     try:
-        return await rec_service_obj.find_best_match(user_id=user_id, user=user)
+        return await rec_service_obj.find_best_match(user_id=user.user_id, user=user)
     except Exception as e:
         logger.error(f"Error in create_room endpoint: {str(e)}")
         raise HTTPException(
