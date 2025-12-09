@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Dict, List
 
-from app.config import LOCATION_COORDS, WEIGHTS, LAT_MAX, LAT_MIN, LON_MAX, LON_MIN, GENDER_MAP, BUDGET_MAX, BUDGET_MIN, LEASE_MIN, LEASE_MAX, FOOD_MAP, ALCOHOL_MAP, SMOKE_MAP
+# from app.config import LOCATION_COORDS, WEIGHTS, LAT_MAX, LAT_MIN, LON_MAX, LON_MIN, GENDER_MAP, BUDGET_MAX, BUDGET_MIN, LEASE_MIN, LEASE_MAX, FOOD_MAP, ALCOHOL_MAP, SMOKE_MAP
 
 def vectorize_room(room_data: Dict) -> np.ndarray:
     """

@@ -12,6 +12,7 @@ class UserCreate(BaseModel):
         description="User's full name"
     )
     email: EmailStr = Field(..., description="Valid email address")
+    password: str = Field(..., min_length=8, max_length=128, description="User password")
     contact_number: str = Field(
         ..., 
         min_length=10, 
@@ -308,3 +309,7 @@ class UserCreate(BaseModel):
                 "interests": ["Reading", "Hiking", "Cooking"]
             }
         }
+
+class UserLogin(BaseModel):
+    email: EmailStr = Field(..., description="Valid email address")
+    password: str = Field(..., min_length=8, max_length=128, description="User password")
