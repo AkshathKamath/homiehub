@@ -21,7 +21,6 @@ class AgentRequest(BaseModel):
         json_schema_extra = {
             "example": {
                 "message": "Find me quiet rooms in Cambridge for studying",
-                "user_id": "N7BHzi80hxrkDeOBAzi7"
             }
         }
 
