@@ -8,6 +8,8 @@ from app.config import settings
 from app.agent.LLM.gemini import LLMClientManager
 from app.services.tool_regsitry import get_tool_registry
 
+## DEMO PUSH TO GIT REPO TO TRIGGER AUTOMATED DEPLOYMENT PIPELINE AND TEST MODEL API
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
