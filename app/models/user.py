@@ -65,6 +65,25 @@ class UserFilter(BaseModel):
         examples=["2025-01-01", "2025-06-15"]
     )
 
+    lifestyle_smoke: Optional[str] = Field(
+        None,
+        min_length=1,
+        max_length=50,
+        description="Smoking preference (e.g., No, Yes, Outside-only, Occasional)"
+    )
+    lifestyle_alcohol: Optional[str] = Field(
+        None,
+        min_length=1,
+        max_length=50,
+        description="Alcohol preference (e.g., No, Yes, Occasional, Social)"
+    )
+    lifestyle_food: Optional[str] = Field(
+        None,
+        min_length=1,
+        max_length=50,
+        description="Food preference (e.g., Veg, Non-Veg, Vegan, Halal, Kosher, Any)"
+    )
+
     limit: int = Field(
         10,
         ge=1,

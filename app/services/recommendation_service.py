@@ -10,8 +10,6 @@ from app.models.user import UserFilter
 
 logger = logging.getLogger(__name__)
 
-logger = logging.getLogger(__name__)
-
 class RecommendationService:
     def __init__(
             self
@@ -65,6 +63,19 @@ class RecommendationService:
                 elif hasattr(room_available, 'date'):
                     if room_available.date() > user.available_from:
                         return False
+                
+        if user.lifestyle_smoke:
+            if room_data.get('lifestyle_smoke') != user.lifestyle_smoke:
+                return False
+
+        if user.lifestyle_alcohol:
+            if room_data.get('lifestyle_alcohol') != user.lifestyle_alcohol:
+                return False
+
+        if user.lifestyle_food:
+            if room_data.get('lifestyle_food') != user.lifestyle_food:
+                return False
+
         return True
     
     async def find_best_match(
