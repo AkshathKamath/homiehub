@@ -25,7 +25,9 @@ class RecommendationService:
         """
         # Location filter
         if user.location:
-            if room_data.get('location') != user.location:
+            room_location = room_data.get('location')
+            # Check if room location matches ANY of the preferred locations
+            if room_location not in user.location:
                 return False
         
         # Max rent filter

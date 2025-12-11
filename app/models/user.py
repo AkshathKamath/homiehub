@@ -11,12 +11,12 @@ class UserFilter(BaseModel):
         examples=["N7BHzi80hxrkDeQBAziZ"]
     )
     
-    location: Optional[str] = Field(
+    location: Optional[List[str]] = Field(
         None,
         min_length=1,
-        max_length=100,
-        description="Filter by specific location in Greater Boston area",
-        examples=["Boston", "Cambridge", "Somerville"]
+        max_length=10,
+        description="Filter by locations in Greater Boston area (can be multiple)",
+        examples=[["Boston", "Cambridge"], ["Somerville"]]
     )
     
     max_rent: Optional[int] = Field(
@@ -79,8 +79,32 @@ class UserFilter(BaseModel):
     #     if not v or not v.strip():
     #         raise ValueError("user_id cannot be empty")
     #     return v.strip()
+    @field_validator('location')
+    @classmethod
+    def validate_location(cls, v: Optional[List[str]]) -> Optional[List[str]]:
+        """Validate location list"""
+        if v is None:
+            return None
+        
+        if not isinstance(v, list):
+            # If single string passed, convert to list
+            return [v.strip()]
+        
+        # Clean and deduplicate locations
+        cleaned = []
+        seen = set()
+        for loc in v:
+            loc_clean = loc.strip()
+            if loc_clean and loc_clean not in seen:
+                seen.add(loc_clean)
+                cleaned.append(loc_clean)
+        
+        if not cleaned:
+            return None
+        
+        return cleaned[:10]
 
-    @field_validator('location', 'room_type', 'flatmate_gender', 'attached_bathroom')
+    @field_validator('room_type', 'flatmate_gender', 'attached_bathroom')
     @classmethod
     def validate_string_fields(cls, v: Optional[str]) -> Optional[str]:
         """Validate string fields."""
