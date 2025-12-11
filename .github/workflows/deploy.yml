@@ -13,54 +13,81 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Create GCP key file
-      run: |
-        echo '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}' > GCP_Account_Key.json
+      - name: Create GCP key file
+        run: |
+          echo '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}' > GCP_Account_Key.json
 
-    - name: Create .env file
-      run: |
-        echo "${{ secrets.ENV_FILE }}" > .env
+      - name: Create .env file
+        run: |
+          echo "${{ secrets.ENV_FILE }}" > .env
 
-    - name: Authenticate to Google Cloud
-      uses: google-github-actions/auth@v2
-      with:
-        credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
-    - name: Set up Cloud SDK
-      uses: google-github-actions/setup-gcloud@v2
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
 
-    - name: Configure Docker for GCR
-      run: gcloud auth configure-docker
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker
 
-    - name: Build Docker image
-      run: |
-        docker build -t gcr.io/homiehub/homiehub-llm-agent-api:${{ github.sha }} .
-        docker tag gcr.io/homiehub/homiehub-llm-agent-api:${{ github.sha }} gcr.io/homiehub/homiehub-llm-agent-api:latest
+      - name: Build Docker image
+        run: |
+          docker build \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --cache-from gcr.io/homiehub/homiehub-llm-agent-api:latest \
+            -t gcr.io/homiehub/homiehub-llm-agent-api:${{ github.sha }} \
+            -t gcr.io/homiehub/homiehub-llm-agent-api:latest \
+            .
 
-    - name: Push to GCR
-      run: |
-        docker push gcr.io/homiehub/homiehub-llm-agent-api:${{ github.sha }}
-        docker push gcr.io/homiehub/homiehub-llm-agent-api:latest
+      - name: Push to GCR
+        run: |
+          docker push gcr.io/homiehub/homiehub-llm-agent-api:${{ github.sha }}
+          docker push gcr.io/homiehub/homiehub-llm-agent-api:latest
 
-    - name: Deploy to Cloud Run
-      run: |
-        gcloud run deploy homiehub-llm-agent-api \
-          --image gcr.io/homiehub/homiehub-llm-agent-api:${{ github.sha }} \
-          --region $REGION \
-          --platform managed \
-          --allow-unauthenticated \
-          --port 8080 \
-          --memory 2Gi \
-          --cpu 2 \
-          --timeout 300
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy homiehub-llm-agent-api \
+            --image gcr.io/homiehub/homiehub-llm-agent-api:${{ github.sha }} \
+            --region $REGION \
+            --platform managed \
+            --allow-unauthenticated \
+            --port 8080 \
+            --memory 2Gi \
+            --cpu 2 \
+            --timeout 300 \
+            --no-traffic  # Add new revision without traffic first
 
-    - name: Cleanup sensitive files
-      if: always()
-      run: |
-        rm -f GCP_Account_Key.json
-        rm -f .env
+      - name: Route traffic to new revision
+        run: |
+          gcloud run services update-traffic homiehub-llm-agent-api \
+            --region $REGION \
+            --to-latest
+
+      - name: Verify deployment
+        run: |
+          gcloud run services describe homiehub-llm-agent-api \
+            --region $REGION \
+            --format="value(status.url)"
+
+      - name: Cleanup old revisions (keep last 3)
+        run: |
+          gcloud run revisions list \
+            --service homiehub-llm-agent-api \
+            --region $REGION \
+            --format="value(name)" \
+            --sort-by="~metadata.creationTimestamp" \
+            | tail -n +4 \
+            | xargs -r -I {} gcloud run revisions delete {} --region $REGION --quiet
+
+      - name: Cleanup sensitive files
+        if: always()
+        run: |
+          rm -f GCP_Account_Key.json
+          rm -f .env
