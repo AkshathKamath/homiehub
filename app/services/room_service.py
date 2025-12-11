@@ -67,7 +67,7 @@ class RoomService:
             
             if not docs:
                 logger.warning(f"No room found for user: {user_id}")
-                raise ValueError(f"No room found for user {user_id}")
+                return {"message": "No room found for this user."}
             
             # Get the first (most recent) room
             room_doc = docs[0]
