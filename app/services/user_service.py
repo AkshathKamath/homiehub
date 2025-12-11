@@ -139,6 +139,43 @@ class UserService:
         except Exception as e:
             logger.error(f"Failed to update user {user_id}: {str(e)}", exc_info=True)
             raise
+    
+    async def get_user_by_id(
+    self,
+    user_id: str
+) -> dict:
+        """
+        Get user profile by ID
+        
+        Args:
+            user_id: The user's document ID
+            
+        Returns:
+            User data without sensitive fields
+        """
+        try:
+            user_ref = self._firestore.collection('users').document(user_id)
+            user_doc = await user_ref.get()
+            
+            if not user_doc.exists:
+                raise ValueError(f"User with ID {user_id} not found")
+            
+            user_data = user_doc.to_dict()
+            
+            # Remove sensitive fields
+            user_data.pop('password', None)
+            user_data.pop('user_vector', None)
+            
+            logger.info(f"Retrieved user profile: {user_id}")
+            
+            return user_data
+            
+        except ValueError as e:
+            logger.error(f"User not found: {str(e)}")
+            raise
+        except Exception as e:
+            logger.error(f"Failed to get user {user_id}: {str(e)}", exc_info=True)
+            raise
 
 def get_user_service() -> UserService:
     """Create new instance per request"""

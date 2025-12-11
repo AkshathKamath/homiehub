@@ -79,3 +79,29 @@ async def update_current_user(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update user profile"
         )
+
+@router.get("/me", status_code=status.HTTP_200_OK)
+async def get_current_user_profile(
+    current_user: dict = Depends(get_current_user),
+    user_service_obj: UserService = Depends(get_user_service)
+):
+    """Get the authenticated user's profile"""
+    try:
+        user_id = current_user['user_id']
+        logger.info(f"Fetching profile for user: {user_id}")
+        
+        user_data = await user_service_obj.get_user_by_id(user_id)
+        
+        return {"user": user_data}
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Error fetching user profile: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch user profile"
+        )

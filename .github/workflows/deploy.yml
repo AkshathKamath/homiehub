@@ -39,25 +39,52 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t gcr.io/homiehub/homiehub-user-room-api:${{ github.sha }} .
-          docker tag gcr.io/homiehub/homiehub-user-room-api:${{ github.sha }} gcr.io/homiehub/homiehub-user-room-api:latest
+          docker build \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --cache-from gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:latest \
+            -t gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+            -t gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:latest \
+            .
 
       - name: Push to GCR
         run: |
-          docker push gcr.io/homiehub/homiehub-user-room-api:${{ github.sha }}
-          docker push gcr.io/homiehub/homiehub-user-room-api:latest
+          docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:latest
 
       - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy homiehub-user-room-api \
-            --image gcr.io/homiehub/homiehub-user-room-api:${{ github.sha }} \
-            --region $REGION \
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+            --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated \
             --port 8080 \
             --memory 2Gi \
             --cpu 2 \
-            --timeout 300
+            --timeout 300 \
+            --no-traffic
+
+      - name: Route traffic to new revision
+        run: |
+          gcloud run services update-traffic ${{ env.SERVICE_NAME }} \
+            --region ${{ env.REGION }} \
+            --to-latest
+
+      - name: Verify deployment
+        run: |
+          gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region ${{ env.REGION }} \
+            --format="value(status.url)"
+
+      - name: Cleanup old revisions (keep last 3)
+        run: |
+          gcloud run revisions list \
+            --service ${{ env.SERVICE_NAME }} \
+            --region ${{ env.REGION }} \
+            --format="value(name)" \
+            --sort-by="~metadata.creationTimestamp" \
+            | tail -n +4 \
+            | xargs -r -I {} gcloud run revisions delete {} --region ${{ env.REGION }} --quiet
 
       - name: Cleanup sensitive files
         if: always()
