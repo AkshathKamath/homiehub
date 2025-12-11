@@ -2,7 +2,8 @@ from fastapi import APIRouter, HTTPException, status, Depends
 import logging
 
 from app.services.user_service import UserService, get_user_service
-from app.models.user import UserCreate, UserLogin
+from app.core.dependencies import get_current_user
+from app.models.user import UserCreate, UserLogin, UserUpdate
 
 logger = logging.getLogger(__name__)
 
@@ -36,4 +37,45 @@ async def login_user(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to authenticate user"
+        )
+
+@router.patch("/me", status_code=status.HTTP_200_OK)
+async def update_current_user(
+    user_update: UserUpdate,
+    current_user: dict = Depends(get_current_user),
+    user_service_obj: UserService = Depends(get_user_service)
+):
+    """
+    Update the authenticated user's profile and preferences
+    
+    Only updates fields that are provided in the request.
+    Automatically re-vectorizes user if matching preferences change.
+    
+    Example request body:
+    {
+        "budget_max": 1800,
+        "preferred_locations": ["Cambridge", "Somerville"],
+        "lifestyle_food": "Vegetarian",
+        "bio": "Updated bio text"
+    }
+    """
+    try:
+        user_id = current_user['user_id']
+        logger.info(f"Update request for user: {user_id}")
+        
+        result = await user_service_obj.update_user(user_id, user_update)
+        
+        return result
+        
+    except ValueError as e:
+        logger.error(f"User not found: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Error updating user: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update user profile"
         )

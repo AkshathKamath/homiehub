@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, field_validator, EmailStr
 from typing import List, Optional
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import re
 
 class UserCreate(BaseModel):
@@ -313,3 +313,78 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr = Field(..., description="Valid email address")
     password: str = Field(..., min_length=8, max_length=128, description="User password")
+
+class UserUpdate(BaseModel):
+    move_in_date: Optional[date] = Field(
+    default_factory=lambda: date.today() + timedelta(days=1),
+    description="Desired move-in date"
+)
+    gender_preference: Optional[str] = Field(
+        default="Any",
+        description="Preferred roommate gender"
+    )
+    preferred_locations: Optional[List[str]] = Field(
+        default=["Boston"],
+        min_length=1,
+        max_length=10,
+        description="List of preferred locations"
+    )
+    budget_max: Optional[int] = Field(
+        default=1500,
+        ge=300,
+        le=10000,
+        description="Maximum monthly budget in USD"
+    )
+    lease_duration_months: Optional[int] = Field(
+        default=12,
+        ge=1,
+        le=24,
+        description="Desired lease duration in months"
+    )
+    room_type_preference: Optional[str] = Field(
+        default="Shared",
+        description="Preferred room type"
+    )
+    attached_bathroom: Optional[str] = Field(
+        default="No",
+        description="Attached bathroom preference"
+    )
+    lifestyle_food: Optional[str] = Field(
+        default="Everything",
+        description="Food lifestyle preference"
+    )
+    lifestyle_alcohol: Optional[str] = Field(
+        default="Occasionally",
+        description="Alcohol consumption preference"
+    )
+    lifestyle_smoke: Optional[str] = Field(
+        default="No",
+        description="Smoking preference"
+    )
+    utilities_preference: Optional[List[str]] = Field(
+        default_factory=list,
+        max_length=10,
+        description="Preferred utilities to be included"
+    )
+    
+    # Profile fields
+    occupation: Optional[str] = Field(
+        default=None,
+        max_length=100,
+        description="Current occupation"
+    )
+    university: Optional[str] = Field(
+        default=None,
+        max_length=100,
+        description="University name"
+    )
+    bio: Optional[str] = Field(
+        default=None,
+        max_length=500,
+        description="Short bio"
+    )
+    interests: Optional[List[str]] = Field(
+        default_factory=list,
+        max_length=20,
+        description="List of interests"
+    )

@@ -1,9 +1,9 @@
-from google.cloud.firestore import AsyncClient, SERVER_TIMESTAMP
+from google.cloud.firestore import AsyncClient, SERVER_TIMESTAMP, DELETE_FIELD
 from google.cloud.firestore_v1.vector import Vector
 import logging
 
 from app.db.firestore import get_firestore
-from app.models.user import UserCreate, UserLogin
+from app.models.user import UserCreate, UserLogin, UserUpdate
 from app.core.security import hash_password, verify_password, create_access_token
 from app.core.vectorize_user import vectorize_user
 
@@ -73,6 +73,71 @@ class UserService:
         
         except Exception as e:
             logger.error(f"Authentication error for email {user.email}: {str(e)}", exc_info=True)
+            raise
+    
+    async def update_user(
+    self,
+    user_id: str,
+    user_update: UserUpdate
+) -> dict:
+        """
+        Update user profile and preferences
+        
+        Args:
+            user_id: The user's document ID in Firestore
+            user_update: UserUpdate model with fields to update
+            
+        Returns:
+            Dictionary with success message and updated user data
+            
+        Raises:
+            Exception: If user not found or update fails
+        """
+        try:
+            # Get user document reference
+            user_ref = self._firestore.collection('users').document(user_id)
+            user_doc = await user_ref.get()
+            
+            # Check if user exists
+            if not user_doc.exists:
+                logger.warning(f"User not found: {user_id}")
+                raise ValueError(f"User with ID {user_id} not found")
+            
+            # Convert update model to dict, excluding None values
+            update_data = user_update.model_dump(exclude_none=True)
+            
+            # Convert date to ISO string if present
+            if 'move_in_date' in update_data:
+                update_data['move_in_date'] = update_data['move_in_date'].isoformat()
+            
+            # Add updated timestamp
+            update_data['updated_at'] = SERVER_TIMESTAMP
+            update_data['user_vector'] = DELETE_FIELD
+        
+            logger.info(f"Updating user {user_id} and removing vector for re-generation")
+            
+            # Log what's being updated
+            logger.info(f"Updating user {user_id} with fields: {list(update_data.keys())}")
+            
+            # Update the document
+            await user_ref.update(update_data)
+            
+            # Get updated user data
+            updated_doc = await user_ref.get()
+            
+            logger.info(f"User {user_id} updated successfully")
+            
+            return {
+                "user_id": user_id,
+                "message": "User updated successfully",
+            }
+            
+        except ValueError as e:
+            # User not found
+            logger.error(f"Validation error: {str(e)}")
+            raise
+        except Exception as e:
+            logger.error(f"Failed to update user {user_id}: {str(e)}", exc_info=True)
             raise
 
 def get_user_service() -> UserService:
