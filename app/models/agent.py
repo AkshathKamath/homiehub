@@ -9,14 +9,7 @@ class AgentRequest(BaseModel):
         description="The user's message or query",
         examples=["Find me rooms in Cambridge under $1500"]
     )
-    # user_id: str = Field(
-    #     ...,
-    #     min_length=1,
-    #     max_length=128,
-    #     description="Unique identifier for the user",
-    #     examples=["N7BHzi80hxrkDeOBAzi7"]
-    # )
-    
+      
     class Config:
         json_schema_extra = {
             "example": {
