@@ -23,7 +23,8 @@ async def lifespan(app: FastAPI):
         logger.info("All connections initialized")
     except Exception as e:
         logger.error(f"Startup failed: {str(e)}", exc_info=True)
-        raise
+        # Don't raise exception - allow app to start even if Firestore fails
+        logger.warning("Continuing startup despite Firestore connection failure")
     
     yield
     
@@ -62,5 +63,7 @@ app.include_router(rooms.router)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8080, reload=True)
+    import os
+    port = int(os.getenv("PORT", 8080))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=True)
 

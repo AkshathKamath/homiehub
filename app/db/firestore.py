@@ -27,18 +27,33 @@ class FirestoreConnection:
             return
         try:
             logger.info("Initializing Firestore connection")
-            # Initialize Firebase Admin SDK with credentials
-            cred = credentials.Certificate(settings.gcloud_json)
-            cls._app = firebase_admin.initialize_app(cred)
+            # Check if Firebase app is already initialized
+            try:
+                cls._app = firebase_admin.get_app()
+                logger.info("Firebase app already initialized")
+            except ValueError:
+                # App not initialized, so initialize it
+                cred = credentials.Certificate(settings.gcloud_json)
+                cls._app = firebase_admin.initialize_app(cred)
+                logger.info("Firebase app initialized")
             
             # Get Firestore client (handles connection pooling internally via gRPC)
-            # cls._client = firestore.client(database_id='homiehubdb')
-            cls._client = firestore.AsyncClient(
-                project=cls._app.project_id,
-                credentials=cls._app.credential.get_credential(),
-                database='homiehubdb'
-            )
-            logger.info("Firestore connected successfully")
+            # Try with database first, fallback to default if it fails
+            try:
+                cls._client = firestore.AsyncClient(
+                    project=cls._app.project_id,
+                    credentials=cls._app.credential.get_credential(),
+                    database='homiehubdb'
+                )
+                logger.info("Firestore connected to homiehubdb database")
+            except Exception as db_error:
+                logger.warning(f"Could not connect to homiehubdb database: {db_error}, trying default database")
+                cls._client = firestore.AsyncClient(
+                    project=cls._app.project_id,
+                    credentials=cls._app.credential.get_credential()
+                )
+                logger.info("Firestore connected to default database")
+            
             cls._initialized = True
             
         except DefaultCredentialsError as e:
