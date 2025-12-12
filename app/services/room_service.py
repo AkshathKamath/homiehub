@@ -38,6 +38,33 @@ class RoomService:
             logger.error(f"Failed to create room: {str(e)}", exc_info=True)
             raise
     
+    async def add_room_with_id(
+            self,
+            user_id: str,
+            room: RoomCreate,
+            room_id: str
+    ):
+        try:
+            room_data = room.model_dump()
+            
+            # Convert date to string for Firestore
+            room_data['available_from'] = room_data['available_from'].isoformat()
+            
+            room_data['created_at'] = SERVER_TIMESTAMP
+            room_data['created_by_user'] = user_id
+
+            doc_ref = self._firestore.collection('rooms').document(room_id)
+            await doc_ref.set(room_data)
+            logger.info(f"Room created with ID: {doc_ref.id}")
+            return {
+                "id": doc_ref.id,
+                "message": "Room created successfully",
+                "created_by_user": user_id
+            }
+        except Exception as e:
+            logger.error(f"Failed to create room: {str(e)}", exc_info=True)
+            raise
+    
     async def get_room(
             self,
             user_id: str

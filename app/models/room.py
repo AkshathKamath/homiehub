@@ -94,7 +94,7 @@ class RoomCreate(BaseModel):
     )
     photos: List[str] = Field(
         default_factory=list,
-        max_length=20,
+        max_length=10,
         description="Photo URLs"
     )
     
@@ -295,7 +295,7 @@ class RoomCreate(BaseModel):
                 "lifestyle_alcohol": "Rarely",
                 "lifestyle_smoke": "No",
                 "contact": "landlord@email.com",
-                "available_from": "2025-01-01",
+                "available_from": "2025-12-15",
                 "num_bedrooms": 3,
                 "num_bathrooms": 2,
                 "description": "Spacious 3BR apartment near MIT with 2 current roommates",
@@ -305,4 +305,7 @@ class RoomCreate(BaseModel):
         }
 
 class RoomDeleteRequest(BaseModel):
-    room_id: str = Field(..., min_length=1)
+    room_id: str = Field(
+        ...,
+        description="ID of the room to delete"
+    )
