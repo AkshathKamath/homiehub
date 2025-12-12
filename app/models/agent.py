@@ -9,7 +9,7 @@ class AgentRequest(BaseModel):
         description="The user's message or query",
         examples=["Find me rooms in Cambridge under $1500"]
     )
-      
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -20,9 +20,9 @@ class AgentRequest(BaseModel):
 
 class AgentResponse(BaseModel):
     """Response model for agent chat endpoint"""
-    response: str = Field(
+    response: Any = Field(  # ✅ allow JSON
         ...,
-        description="The agent's conversational response"
+        description="The agent response. For search requests this is the raw tool JSON."
     )
     state: Dict[str, Any] = Field(
         ...,
@@ -32,11 +32,15 @@ class AgentResponse(BaseModel):
         None,
         description="List of tools that were called during this interaction"
     )
-    
+
     class Config:
         json_schema_extra = {
             "example": {
-                "response": "I found 4 great rooms in Cambridge...",
+                "response": {
+                    "user_id": "N7BHzi80hxrkDeOBAzi7",
+                    "matches": [],
+                    "total_results": 0
+                },
                 "state": {
                     "message_count": 5,
                     "original_message": "Find me rooms in Cambridge",
