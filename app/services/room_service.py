@@ -89,6 +89,43 @@ class RoomService:
         except Exception as e:
             logger.error(f"Failed to get room for user {user_id}: {str(e)}", exc_info=True)
             raise
+    
+    async def delete_room(self, user_id: str) -> dict:
+        """
+        Delete the room created by the authenticated user.
+
+        Assumes:
+        - One primary room per user
+        - Deletes the most recent room if multiple exist
+        """
+        try:
+            rooms_ref = self._firestore.collection('rooms')
+            query = rooms_ref.where(
+                filter=FieldFilter('created_by_user', '==', user_id)
+            )
+
+            docs = await query.get()
+
+            if not docs:
+                logger.warning(f"No room to delete for user: {user_id}")
+                return {"message": "No room found to delete."}
+
+            room_doc = docs[0]
+            await room_doc.reference.delete()
+
+            logger.info(f"Deleted room {room_doc.id} for user {user_id}")
+
+            return {
+                "id": room_doc.id,
+                "message": "Room deleted successfully"
+            }
+
+        except Exception as e:
+            logger.error(
+                f"Failed to delete room for user {user_id}: {str(e)}",
+                exc_info=True
+            )
+            raise
 
 
 def get_room_service() -> RoomService:
