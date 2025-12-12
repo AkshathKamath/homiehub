@@ -303,3 +303,6 @@ class RoomCreate(BaseModel):
                 "photos": ["https://example.com/photo1.jpg"]
             }
         }
+
+class RoomDeleteRequest(BaseModel):
+    room_id: str = Field(..., min_length=1)

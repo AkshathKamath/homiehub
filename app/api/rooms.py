@@ -3,7 +3,7 @@ import logging
 
 from app.services.room_service import RoomService, get_room_service
 from app.core.dependencies import get_current_user
-from app.models.room import RoomCreate
+from app.models.room import RoomCreate, RoomDeleteRequest
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +52,7 @@ async def get_room(
 
 @router.delete("/me", status_code=status.HTTP_200_OK)
 async def delete_room(
+    room: RoomDeleteRequest,
     current_user: dict = Depends(get_current_user),
     room_service_obj: RoomService = Depends(get_room_service)
 ):
@@ -62,7 +63,7 @@ async def delete_room(
         user_id = current_user['user_id']
         logger.info(f"Deleting room for user: {user_id}")
 
-        return await room_service_obj.delete_room(user_id=user_id)
+        return await room_service_obj.delete_room_by_id(user_id=user_id, room_id=room.room_id)
 
     except Exception:
         logger.error("Error deleting room", exc_info=True)
