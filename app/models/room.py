@@ -92,7 +92,7 @@ class RoomCreate(BaseModel):
         max_length=20,
         description="Available amenities"
     )
-    photos: List[str] = Field(
+    photos: Optional[List[str]] = Field(
         default_factory=list,
         max_length=10,
         description="Photo URLs"
@@ -259,7 +259,7 @@ class RoomCreate(BaseModel):
     
     @field_validator('photos')
     @classmethod
-    def validate_photos(cls, v: List[str]) -> List[str]:
+    def validate_photos(cls, v: Optional[List[str]]) -> List[str]:
         """Validate photo URLs"""
         if not v:
             return []
