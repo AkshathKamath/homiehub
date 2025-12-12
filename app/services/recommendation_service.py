@@ -1,4 +1,4 @@
-from google.cloud.firestore import AsyncClient
+from google.cloud.firestore import AsyncClient, Query
 from google.cloud.firestore_v1.base_vector_query import DistanceMeasure
 from google.cloud.firestore_v1.vector import Vector
 from datetime import date
@@ -152,6 +152,86 @@ class RecommendationService:
             raise
         except Exception as e:
             logger.error(f"Failed to get matched rooms: {str(e)}", exc_info=True)
+            raise
+    
+    async def find_rooms_by_availability(
+    self,
+    user_id: str,
+    user: UserFilter,
+    limit: int = 10
+):
+        """
+        Find rooms sorted by availability date (ascending) with filters applied
+        
+        Fetches all rooms sorted by available_from, then applies filters client-side.
+        No vector matching - pure availability-based search.
+        
+        Args:
+            user_id: User identifier (for logging/tracking)
+            user: UserFilter with search criteria
+            limit: Maximum number of results
+            
+        Returns:
+            Dictionary with matches sorted by availability date
+        """
+        start_time = time.time()
+        
+        try:
+            logger.info(f"Availability search for user {user_id}")
+            
+            # Query ALL rooms sorted by available_from (ascending)
+            rooms_ref = self._firestore.collection('rooms')
+            
+            # Just sort by available_from - no filters in query
+            query = rooms_ref.order_by('available_from', direction=Query.ASCENDING)
+            
+            # Fetch enough to account for filtering
+            fetch_limit = min(user.limit * 5, 500)
+            query = query.limit(fetch_limit)
+            
+            logger.info(f"Querying rooms: fetch_limit={fetch_limit}")
+            
+            # Execute query
+            docs = await query.get()
+            total_fetched = len(docs)
+            
+            logger.info(f"Fetched {total_fetched} rooms sorted by availability")
+            
+            # Apply filters client-side
+            results = []
+            
+            for doc in docs:
+                room_data = doc.to_dict()
+                
+                # Apply all filters
+                if not self._matches_filters(room_data, user):
+                    continue
+                
+                # Add to results (already sorted by availability from Firestore)
+                results.append({
+                    'room_id': doc.id,
+                    'room_data': room_data
+                })
+                
+                # Stop when we have enough
+                if len(results) >= user.limit:
+                    break
+            
+            elapsed_ms = int((time.time() - start_time) * 1000)
+            logger.info(
+                f"Availability search completed: query_time_ms={elapsed_ms}, "
+                f"fetched={total_fetched}, returned={len(results)}"
+            )
+            
+            return {
+                'user_id': user_id,
+                'matches': results,
+                'total_results': len(results),
+                'sorted_by': 'availability_date'
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to get rooms by availability: {str(e)}", exc_info=True)
             raise
 
 def get_recommendation_service() -> RecommendationService:
